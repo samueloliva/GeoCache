@@ -3,7 +3,7 @@ Geo Distributed LRU cache
 
 
 # Usage:
-"""python
+```python
 
 serv1 = DistributedCache(3, 2, '127.0.0.1')
 serv1.start_server()
@@ -26,4 +26,4 @@ print(cli1.getCache(2))
 print(cli1.getCache(3))
 print(cli1.getCache(4))
 
-"""
+```
