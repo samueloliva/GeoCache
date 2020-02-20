@@ -1,6 +1,8 @@
 from Cache import Cache
 from Data import Data
 import socket
+from threading import Thread
+import traceback
 
 
 class DistributedCache():
@@ -14,14 +16,18 @@ class DistributedCache():
 		if self.server_address is not None:
 			self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-			self.server.bind((self.server_address, 5000))
+			
+			try:
+				self.server.bind((self.server_address, 5000))
+			except:
+				print("Bind failed")
+
 			print("Server started")
 			self.listen_clients()
 	
 	def start_client(self) -> None:
 		if self.server_address is not None:
 			self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-			self.client.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 			self.client.connect((self.server_address, 5000))
 
 	def send_data_to_clients(self, data) -> None:
@@ -32,18 +38,44 @@ class DistributedCache():
 		self.count += 1
 		self.data = Data(self.count, msg)
 		self.cache.putData(self.data)
-		msg = ("\n"+msg).encode()
-		self.client.sendall(msg)
+		self.client.sendall(msg.encode("utf8"))
 	
 	def listen_clients(self) -> None:
 		self.server.listen(1)
 		print("Server is listening for clients...\n\n")
 
-	def read_data_server(self) -> None:
-		con, cli = self.server.accept()
-		msg = con.recv(1024).decode()
-		print("-- CLI_" + str(cli[1]) + " -- " + msg)
+	def client_thread(self, conn, cli) -> None:
+		is_active = True
+		while is_active:
+			msg = conn.recv(5120).decode()
+			if msg == 'quit':
+				print("exiting...")
+				conn.close()
+				is_active = False
+				
+			print(" CLI_" + str(cli[1]) + " -> " + msg)
+		
+
+	def read_data_from_server(self) -> None:
+		while True:
+			conn, cli = self.server.accept()
+			try:
+				Thread(target=self.client_thread, args=(conn, cli)).start()
+			except:
+				print("Thread did not start")
 
 	def getCache(self, id):
 		return self.cache.getData(id)
 	
+
+
+
+
+
+
+
+
+
+
+		
+
