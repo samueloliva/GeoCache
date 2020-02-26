@@ -2,7 +2,7 @@
 Geo Distributed LRU cache
 
 
-# Usage:
+# Usage
 Execute Client1 and Server1 in python
 ```
 # python3 Client1.py
